@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="PerlinNoise/PerlinNoise.vcxproj" Id="e471dd3e-c267-4884-91ea-ddc4cdeb67fa" />
+</Solution>
