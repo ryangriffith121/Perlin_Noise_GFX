@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <cmath>
+#include <cstdint>
 #include <random>
 #include <iostream>
 
@@ -15,6 +16,16 @@ std::vector<float> normalizeVector(std::vector<float> vector2) {
 	float vectorMagnitude = std::sqrt(std::pow(vector2[0], 2) + std::pow(vector2[1], 2));
 	normalizedVector = { vector2[0] / vectorMagnitude, vector2[1] / vectorMagnitude };
 	return normalizedVector;
+}
+
+std::vector<float> vector2DotProduct(std::vector<float> vec1, std::vector<float> vec2) {
+	std::vector<float> productVec = {vec1[0] * vec2[0], vec1[1] * vec2[1]};
+	return productVec;
+}
+
+int vector2Magnitude(std::vector<float> vec) {
+	int vecMagnitude = std::sqrt(std::pow(vec[0], 2) + std::pow(vec[1], 2));
+	return vecMagnitude;
 }
 
 std::vector<std::vector<std::vector<float>>> createPerlinNoise(int width, int height, int randSeed) {
@@ -65,6 +76,88 @@ void renderPerlinVectors(sf::RenderWindow& drawSurface, std::vector<std::vector<
 	for (const auto& line : lines) {
 		drawSurface.draw(line.data(), line.size(), sf::PrimitiveType::Lines);
 	}
+}
+
+sf::Color hsv(float hue, float saturation, float value) {
+	hue = std::fmod(hue, 360.0f);
+	if (hue < 0.0f) hue += 360.0f;
+	saturation = std::max(0.0f, std::min(1.0f, saturation));
+	value = std::max(0.0f, std::min(1.0f, value));
+
+	float c = value * saturation;
+	float x = c * (1.0f - std::abs(std::fmod(hue / 60.0f, 2.0f) - 1.0f));
+	float m = value - c;
+
+	float r = 0, g = 0, b = 0;
+
+	if (hue >= 0 && hue < 60) {
+		r = c; g = x; b = 0;
+	}
+	else if (hue >= 60 && hue < 120) {
+		r = x; g = c; b = 0;
+	}
+	else if (hue >= 120 && hue < 180) {
+		r = 0; g = c; b = x;
+	}
+	else if (hue >= 180 && hue < 240) {
+		r = 0; g = x; b = c;
+	}
+	else if (hue >= 240 && hue < 300) {
+		r = x; g = 0; b = c;
+	}
+	else if (hue >= 300 && hue < 360) {
+		r = c; g = 0; b = x;
+	}
+
+	return sf::Color(
+		static_cast<std::uint8_t>((r + m) * 255),
+		static_cast<std::uint8_t>((g + m) * 255),
+		static_cast<std::uint8_t>((b + m) * 255)
+	);
+}
+
+void renderPerlinGradient(sf::RenderWindow& drawSurface, std::vector<std::vector<std::vector<float>>> pArray) {
+	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / PERLIN_WIDTH;
+	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / PERLIN_HEIGHT;
+
+	int screenMargin = int(vectorMarginX / 2);
+
+	sf::Image perlinGradient({WINDOW_WIDTH, WINDOW_HEIGHT}, sf::Color(0, 0, 255));
+	
+	for (int i = 0; i < WINDOW_WIDTH; i++) {
+		for (int j = 0; j < WINDOW_HEIGHT; i++) {
+
+			std::vector<float> tlVec;
+			std::vector<float> blVec;
+			std::vector<float> trVec;
+			std::vector<float> brVec;
+
+			std::vector<float> tlVecDistance = { i - tlVec[0], j - tlVec[1] };
+			std::vector<float> blVecDistance = { i - blVec[0], blVec[1] - j };
+			std::vector<float> trVecDistance = { trVec[0] - i, j - trVec[1] };
+			std::vector<float> brVecDistance = { brVec[0] - i, brVec[1] - j };
+
+			std::vector<float> tlVecProduct = vector2DotProduct(tlVec, tlVecDistance);
+			std::vector<float> blVecProduct = vector2DotProduct(blVec, blVecDistance);
+			std::vector<float> trVecProduct = vector2DotProduct(trVec, trVecDistance);
+			std::vector<float> brVecProduct = vector2DotProduct(brVec, brVecDistance);
+
+			float tlVecProductMagnitude;
+			float blVecProductMagnitude;
+			float trVecProductMagnitude;
+			float brVecProductMagnitude;
+
+			float pixelValue = (tlVecProductMagnitude + blVecProductMagnitude + trVecProductMagnitude + brVecProductMagnitude) / 4;
+
+			perlinGradient.setPixel(sf::Vector2u(i, j), hsv(pixelValue * 255, 255.0, 255.0));
+		}
+	}
+
+	sf::Texture texture;
+	texture.loadFromImage(perlinGradient);
+	sf::Sprite sprite(texture);
+
+	drawSurface.draw(sprite);
 }
 
 int main() {
