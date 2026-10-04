@@ -4,8 +4,8 @@
 #include <random>
 #include <iostream>
 
-const unsigned int WINDOW_WIDTH = 512;
-const unsigned int WINDOW_HEIGHT = 512;
+const unsigned int WINDOW_WIDTH = 1024;
+const unsigned int WINDOW_HEIGHT = 1024;
 
 const unsigned int PERLIN_WIDTH = 16;
 const unsigned int PERLIN_HEIGHT = 16;
@@ -33,6 +33,40 @@ std::vector<std::vector<std::vector<float>>> createPerlinNoise(int width, int he
 	return perlinArray;
 }
 
+void renderPerlinVectors(sf::RenderWindow& drawSurface, std::vector<std::vector<std::vector<float>>> pArray) {
+	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / PERLIN_WIDTH;
+	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / PERLIN_HEIGHT;
+
+	int screenMargin = int(vectorMarginX / 2);
+
+	int radius = 5;
+	int lineSize = 35;
+
+	std::vector<sf::CircleShape> circles;
+
+	std::vector<std::vector<sf::Vertex>> lines;
+
+	for (int i = 0; i < pArray.size(); i++) {
+		for (int j = 0; j < pArray[i].size(); j++) {
+			sf::CircleShape shape(radius);
+			shape.setFillColor(sf::Color(255, 0, 0));
+			shape.setPosition({(i * vectorMarginX) - radius + screenMargin, (j * vectorMarginY) - radius + screenMargin});
+			std::vector<sf::Vertex> line = { sf::Vertex{ sf::Vector2f((i * vectorMarginX) + screenMargin, (j * vectorMarginY) + screenMargin) }, sf::Vertex{ sf::Vector2f(((i * vectorMarginX) + (pArray[i][j][0] * lineSize)) + screenMargin, ((j * vectorMarginY) + (pArray[i][j][1] * lineSize)) + screenMargin)}};
+			circles.push_back(shape);
+			lines.push_back(line);
+		}
+		std::cout << std::endl;
+	}
+
+	for (const auto& circle : circles) {
+		drawSurface.draw(circle);
+	}
+
+	for (const auto& line : lines) {
+		drawSurface.draw(line.data(), line.size(), sf::PrimitiveType::Lines);
+	}
+}
+
 int main() {
 	std::random_device randomSeed;
 
@@ -40,7 +74,7 @@ int main() {
 
 	for (int i = 0; i < PERLIN_WIDTH; i++) {
 		for (int j = 0; j < PERLIN_HEIGHT; j++) {
-			std::cout << "(" << perlinArray[i][j][0] << "," << perlinArray[i][j][0] << "), ";
+			std::cout << "(" << perlinArray[i][j][0] << "," << perlinArray[i][j][1] << "), ";
 		}
 		std::cout << std::endl;
 	}
@@ -56,6 +90,9 @@ int main() {
 		}
 
 		window.clear();
+
+		renderPerlinVectors(window, perlinArray);
+
 		window.display();
 	}
 
