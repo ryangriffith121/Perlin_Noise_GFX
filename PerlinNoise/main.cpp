@@ -5,22 +5,31 @@
 #include <random>
 #include <iostream>
 
-const unsigned int WINDOW_WIDTH = 1024;
-const unsigned int WINDOW_HEIGHT = 1024;
+const unsigned int WINDOW_WIDTH = 1000;
+const unsigned int WINDOW_HEIGHT = 1000;
 
-const unsigned int PERLIN_WIDTH = 16;
-const unsigned int PERLIN_HEIGHT = 16;
+const unsigned int PERLIN_WIDTH = 10;
+const unsigned int PERLIN_HEIGHT = 10;
+
+const unsigned int NOISE_SCALE = 16;
 
 std::vector<float> normalizeVector(std::vector<float> vector2) {
-	std::vector<float> normalizedVector = {0.0, 0.0};
+	std::vector<float> normalizedVector = { 0.0, 0.0 };
 	float vectorMagnitude = std::sqrt(std::pow(vector2[0], 2) + std::pow(vector2[1], 2));
 	normalizedVector = { vector2[0] / vectorMagnitude, vector2[1] / vectorMagnitude };
 	return normalizedVector;
 }
 
-std::vector<float> vector2DotProduct(std::vector<float> vec1, std::vector<float> vec2) {
-	std::vector<float> productVec = {vec1[0] * vec2[0], vec1[1] * vec2[1]};
-	return productVec;
+float vector2DotProduct(std::vector<float> vec1, std::vector<float> vec2) {
+	return vec1[0] * vec2[0] + vec1[1] * vec2[1];
+}
+
+float fade(float t) {
+	return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+}
+
+float interpolate(float a, float b, float t) {
+	return a + t * (b - a);
 }
 
 int vector2Magnitude(std::vector<float> vec) {
@@ -32,11 +41,11 @@ std::vector<std::vector<std::vector<float>>> createPerlinNoise(int width, int he
 	std::mt19937 gen(randSeed);
 	std::uniform_real_distribution<float> distrib(-1.0, 1.0);
 
-	std::vector< std::vector< std::vector<float> > > perlinArray(width, std::vector< std::vector<float> >(height, std::vector<float>(2,0.0)));
-	
+	std::vector< std::vector< std::vector<float> > > perlinArray(width, std::vector< std::vector<float> >(height, std::vector<float>(2, 0.0)));
+
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
-			perlinArray[i][j] = normalizeVector({distrib(gen), distrib(gen)});
+			perlinArray[i][j] = normalizeVector({ distrib(gen), distrib(gen) });
 		}
 	}
 
@@ -44,7 +53,21 @@ std::vector<std::vector<std::vector<float>>> createPerlinNoise(int width, int he
 	return perlinArray;
 }
 
-void renderPerlinVectors(sf::RenderWindow& drawSurface, std::vector<std::vector<std::vector<float>>> pArray) {
+std::vector<std::vector<std::vector<float>>> rotatePerlinVectors(const std::vector<std::vector<std::vector<float>>>& pArray, float time) {
+	std::vector<std::vector<std::vector<float>>> rotatedArray = pArray;
+
+	for (int i = 0; i < pArray.size(); i++) {
+		for (int j = 0; j < pArray[i].size(); j++) {
+			float speed = 0.5f + ((i * 7 + j * 13) % 10) / 10.0f;
+			float angle = std::atan2(pArray[i][j][1], pArray[i][j][0]) + time * speed;
+			rotatedArray[i][j] = { std::cos(angle), std::sin(angle) };
+		}
+	}
+
+	return rotatedArray;
+}
+
+void renderPerlinVectors(sf::RenderWindow& drawSurface, const std::vector<std::vector<std::vector<float>>>& pArray) {
 	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / PERLIN_WIDTH;
 	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / PERLIN_HEIGHT;
 
@@ -61,8 +84,8 @@ void renderPerlinVectors(sf::RenderWindow& drawSurface, std::vector<std::vector<
 		for (int j = 0; j < pArray[i].size(); j++) {
 			sf::CircleShape shape(radius);
 			shape.setFillColor(sf::Color(255, 0, 0));
-			shape.setPosition({(i * vectorMarginX) - radius + screenMargin, (j * vectorMarginY) - radius + screenMargin});
-			std::vector<sf::Vertex> line = { sf::Vertex{ sf::Vector2f((i * vectorMarginX) + screenMargin, (j * vectorMarginY) + screenMargin) }, sf::Vertex{ sf::Vector2f(((i * vectorMarginX) + (pArray[i][j][0] * lineSize)) + screenMargin, ((j * vectorMarginY) + (pArray[i][j][1] * lineSize)) + screenMargin)}};
+			shape.setPosition({ (i * vectorMarginX) - radius + screenMargin, (j * vectorMarginY) - radius + screenMargin });
+			std::vector<sf::Vertex> line = { sf::Vertex{ sf::Vector2f((i * vectorMarginX) + screenMargin, (j * vectorMarginY) + screenMargin) }, sf::Vertex{ sf::Vector2f(((i * vectorMarginX) + (pArray[i][j][0] * lineSize)) + screenMargin, ((j * vectorMarginY) + (pArray[i][j][1] * lineSize)) + screenMargin)} };
 			circles.push_back(shape);
 			lines.push_back(line);
 		}
@@ -116,46 +139,64 @@ sf::Color hsv(float hue, float saturation, float value) {
 	);
 }
 
-void renderPerlinGradient(sf::RenderWindow& drawSurface, std::vector<std::vector<std::vector<float>>> pArray) {
+void renderPerlinGradient(sf::RenderWindow& drawSurface, const std::vector<std::vector<std::vector<float>>>& pArray) {
 	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / PERLIN_WIDTH;
 	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / PERLIN_HEIGHT;
 
 	int screenMargin = int(vectorMarginX / 2);
 
-	sf::Image perlinGradient({WINDOW_WIDTH, WINDOW_HEIGHT}, sf::Color(0, 0, 255));
-	
-	for (int i = 0; i < WINDOW_WIDTH; i++) {
-		for (int j = 0; j < WINDOW_HEIGHT; i++) {
+	sf::Image perlinGradient({ WINDOW_WIDTH / NOISE_SCALE, WINDOW_HEIGHT / NOISE_SCALE }, sf::Color(0, 0, 255));
 
-			std::vector<float> tlVec;
-			std::vector<float> blVec;
-			std::vector<float> trVec;
-			std::vector<float> brVec;
+	for (int i = 0; i < WINDOW_WIDTH / NOISE_SCALE; i++) {
+		for (int j = 0; j < WINDOW_HEIGHT / NOISE_SCALE; j++) {
 
-			std::vector<float> tlVecDistance = { i - tlVec[0], j - tlVec[1] };
-			std::vector<float> blVecDistance = { i - blVec[0], blVec[1] - j };
-			std::vector<float> trVecDistance = { trVec[0] - i, j - trVec[1] };
-			std::vector<float> brVecDistance = { brVec[0] - i, brVec[1] - j };
+			float gridX = (static_cast<int>(i * NOISE_SCALE) - screenMargin) / vectorMarginX;
+			float gridY = (static_cast<int>(j * NOISE_SCALE) - screenMargin) / vectorMarginY;
 
-			std::vector<float> tlVecProduct = vector2DotProduct(tlVec, tlVecDistance);
-			std::vector<float> blVecProduct = vector2DotProduct(blVec, blVecDistance);
-			std::vector<float> trVecProduct = vector2DotProduct(trVec, trVecDistance);
-			std::vector<float> brVecProduct = vector2DotProduct(brVec, brVecDistance);
+			int cellX = static_cast<int>(std::floor(gridX));
+			int cellY = static_cast<int>(std::floor(gridY));
 
-			float tlVecProductMagnitude;
-			float blVecProductMagnitude;
-			float trVecProductMagnitude;
-			float brVecProductMagnitude;
+			float fracX = gridX - cellX;
+			float fracY = gridY - cellY;
 
-			float pixelValue = (tlVecProductMagnitude + blVecProductMagnitude + trVecProductMagnitude + brVecProductMagnitude) / 4;
+			int w = PERLIN_WIDTH;
+			int h = PERLIN_HEIGHT;
 
-			perlinGradient.setPixel(sf::Vector2u(i, j), hsv(pixelValue * 255, 255.0, 255.0));
+			int x0 = ((cellX % w) + w) % w;
+			int x1 = (x0 + 1) % w;
+			int y0 = ((cellY % h) + h) % h;
+			int y1 = (y0 + 1) % h;
+
+			std::vector<float> tlVec = pArray[x0][y0];
+			std::vector<float> trVec = pArray[x1][y0];
+			std::vector<float> blVec = pArray[x0][y1];
+			std::vector<float> brVec = pArray[x1][y1];
+
+			std::vector<float> tlVecDistance = { fracX, fracY };
+			std::vector<float> trVecDistance = { fracX - 1.0f, fracY };
+			std::vector<float> blVecDistance = { fracX, fracY - 1.0f };
+			std::vector<float> brVecDistance = { fracX - 1.0f, fracY - 1.0f };
+
+			float tlVecProduct = vector2DotProduct(tlVec, tlVecDistance);
+			float trVecProduct = vector2DotProduct(trVec, trVecDistance);
+			float blVecProduct = vector2DotProduct(blVec, blVecDistance);
+			float brVecProduct = vector2DotProduct(brVec, brVecDistance);
+
+			float topValue = interpolate(tlVecProduct, trVecProduct, fade(fracX));
+			float bottomValue = interpolate(blVecProduct, brVecProduct, fade(fracX));
+			float pixelValue = interpolate(topValue, bottomValue, fade(fracY));
+
+			pixelValue = std::max(0.0f, std::min(1.0f, (pixelValue + 0.707f) / 1.414f));
+
+			perlinGradient.setPixel(sf::Vector2u(i, j), hsv(pixelValue * 300.0f, 1.0f, 1.0f));
 		}
 	}
 
 	sf::Texture texture;
 	texture.loadFromImage(perlinGradient);
+	texture.setSmooth(true);
 	sf::Sprite sprite(texture);
+	sprite.setScale({ static_cast<float>(NOISE_SCALE), static_cast<float>(NOISE_SCALE) });
 
 	drawSurface.draw(sprite);
 }
@@ -165,15 +206,17 @@ int main() {
 
 	std::vector<std::vector<std::vector<float>>> perlinArray = createPerlinNoise(PERLIN_WIDTH, PERLIN_HEIGHT, 0);
 
-	for (int i = 0; i < PERLIN_WIDTH; i++) {
-		for (int j = 0; j < PERLIN_HEIGHT; j++) {
-			std::cout << "(" << perlinArray[i][j][0] << "," << perlinArray[i][j][1] << "), ";
-		}
-		std::cout << std::endl;
-	}
+	//for (int i = 0; i < PERLIN_WIDTH; i++) {
+	//	for (int j = 0; j < PERLIN_HEIGHT; j++) {
+	//		std::cout << "(" << perlinArray[i][j][0] << "," << perlinArray[i][j][1] << "), ";
+	//	}
+	//	std::cout << std::endl;
+	//}
 
 	sf::RenderWindow window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Perlin Noise");
 	window.setFramerateLimit(60);
+
+	sf::Clock clock;
 
 	while (window.isOpen()) {
 		while (const std::optional event = window.pollEvent()) {
@@ -184,7 +227,12 @@ int main() {
 
 		window.clear();
 
-		renderPerlinVectors(window, perlinArray);
+		float time = clock.getElapsedTime().asSeconds();
+		std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(perlinArray, time);
+
+		renderPerlinGradient(window, animatedArray);
+
+		//renderPerlinVectors(window, animatedArray);
 
 		window.display();
 	}
