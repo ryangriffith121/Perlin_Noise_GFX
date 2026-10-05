@@ -2,7 +2,7 @@
 
 A graphical visualizer for 2D Perlin noise, rendered as a smooth, color-mapped heatmap.
 
-<img width="500" height="500" alt="Perlin_Noise" src="https://github.com/user-attachments/assets/e324affc-953a-4e3e-b7d0-e6d382532ee7" />
+<img width="500" height="500" alt="Perlin_Noise" src="https://github.com/user-attachments/assets/e81db79e-32c0-4e63-b4a8-df2f57179165" />
 
 ## About
 
