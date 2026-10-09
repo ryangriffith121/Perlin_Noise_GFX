@@ -5,13 +5,13 @@
 #include <random>
 #include <iostream>
 
-const unsigned int WINDOW_WIDTH = 1000;
-const unsigned int WINDOW_HEIGHT = 1000;
+const unsigned int WINDOW_WIDTH = 500;
+const unsigned int WINDOW_HEIGHT = 500;
 
 const unsigned int PERLIN_WIDTH = 10;
 const unsigned int PERLIN_HEIGHT = 10;
 
-const unsigned int NOISE_SCALE = 16;
+const unsigned int NOISE_SCALE = 4;
 
 std::vector<float> normalizeVector(std::vector<float> vector2) {
 	std::vector<float> normalizedVector = { 0.0, 0.0 };
@@ -139,13 +139,13 @@ sf::Color hsv(float hue, float saturation, float value) {
 	);
 }
 
-void renderPerlinGradient(sf::RenderWindow& drawSurface, const std::vector<std::vector<std::vector<float>>>& pArray) {
+std::vector<std::vector<float>> createPerlinGradient(const std::vector<std::vector<std::vector<float>>>& pArray) {
 	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / PERLIN_WIDTH;
 	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / PERLIN_HEIGHT;
 
 	int screenMargin = int(vectorMarginX / 2);
 
-	sf::Image perlinGradient({ WINDOW_WIDTH / NOISE_SCALE, WINDOW_HEIGHT / NOISE_SCALE }, sf::Color(0, 0, 255));
+	std::vector<std::vector<float>> perlinGradient(WINDOW_HEIGHT, std::vector<float>(WINDOW_WIDTH, -1.0));
 
 	for (int i = 0; i < WINDOW_WIDTH / NOISE_SCALE; i++) {
 		for (int j = 0; j < WINDOW_HEIGHT / NOISE_SCALE; j++) {
@@ -188,7 +188,22 @@ void renderPerlinGradient(sf::RenderWindow& drawSurface, const std::vector<std::
 
 			pixelValue = std::max(0.0f, std::min(1.0f, (pixelValue + 0.707f) / 1.414f));
 
-			perlinGradient.setPixel(sf::Vector2u(i, j), hsv(pixelValue * 300.0f, 1.0f, 1.0f));
+			perlinGradient[i][j] = pixelValue;
+			
+			
+		}
+	}
+
+	return perlinGradient;
+
+}
+
+void renderPerlinGradient(sf::RenderWindow& drawSurface, const std::vector<std::vector<float>>& pArray) {
+	sf::Image perlinGradient({ WINDOW_WIDTH / NOISE_SCALE, WINDOW_HEIGHT / NOISE_SCALE }, sf::Color(0, 0, 255));
+
+	for (int i = 0; i < WINDOW_WIDTH / NOISE_SCALE; i++) {
+		for (int j = 0; j < WINDOW_HEIGHT / NOISE_SCALE; j++) {
+			perlinGradient.setPixel(sf::Vector2u(i, j), hsv(pArray[i][j] * 300.0f, 1.0f, 1.0f));
 		}
 	}
 
@@ -230,7 +245,7 @@ int main() {
 		float time = clock.getElapsedTime().asSeconds();
 		std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(perlinArray, time);
 
-		renderPerlinGradient(window, animatedArray);
+		renderPerlinGradient(window, createPerlinGradient(animatedArray));
 
 		//renderPerlinVectors(window, animatedArray);
 
