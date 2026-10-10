@@ -5,13 +5,10 @@
 #include <random>
 #include <iostream>
 
-const unsigned int WINDOW_WIDTH = 500;
-const unsigned int WINDOW_HEIGHT = 500;
+const unsigned int WINDOW_WIDTH = 800;
+const unsigned int WINDOW_HEIGHT = 800;
 
-const unsigned int PERLIN_WIDTH = 10;
-const unsigned int PERLIN_HEIGHT = 10;
-
-const unsigned int NOISE_SCALE = 4;
+const unsigned int NOISE_SCALE = 1;
 
 std::vector<float> normalizeVector(std::vector<float> vector2) {
 	std::vector<float> normalizedVector = { 0.0, 0.0 };
@@ -67,9 +64,9 @@ std::vector<std::vector<std::vector<float>>> rotatePerlinVectors(const std::vect
 	return rotatedArray;
 }
 
-void renderPerlinVectors(sf::RenderWindow& drawSurface, const std::vector<std::vector<std::vector<float>>>& pArray) {
-	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / PERLIN_WIDTH;
-	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / PERLIN_HEIGHT;
+void renderPerlinVectors(sf::RenderWindow& drawSurface, const std::vector<std::vector<std::vector<float>>>& pArray, int width, int height) {
+	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / width;
+	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / height;
 
 	int screenMargin = int(vectorMarginX / 2);
 
@@ -139,9 +136,9 @@ sf::Color hsv(float hue, float saturation, float value) {
 	);
 }
 
-std::vector<std::vector<float>> createPerlinGradient(const std::vector<std::vector<std::vector<float>>>& pArray) {
-	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / PERLIN_WIDTH;
-	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / PERLIN_HEIGHT;
+std::vector<std::vector<float>> createPerlinGradient(const std::vector<std::vector<std::vector<float>>>& pArray, int width, int height) {
+	float vectorMarginX = static_cast<float>(WINDOW_WIDTH) / width;
+	float vectorMarginY = static_cast<float>(WINDOW_HEIGHT) / height;
 
 	int screenMargin = int(vectorMarginX / 2);
 
@@ -159,8 +156,8 @@ std::vector<std::vector<float>> createPerlinGradient(const std::vector<std::vect
 			float fracX = gridX - cellX;
 			float fracY = gridY - cellY;
 
-			int w = PERLIN_WIDTH;
-			int h = PERLIN_HEIGHT;
+			int w = width;
+			int h = height;
 
 			int x0 = ((cellX % w) + w) % w;
 			int x1 = (x0 + 1) % w;
@@ -219,8 +216,6 @@ void renderPerlinGradient(sf::RenderWindow& drawSurface, const std::vector<std::
 int main() {
 	std::random_device randomSeed;
 
-	std::vector<std::vector<std::vector<float>>> perlinArray = createPerlinNoise(PERLIN_WIDTH, PERLIN_HEIGHT, 0);
-
 	//for (int i = 0; i < PERLIN_WIDTH; i++) {
 	//	for (int j = 0; j < PERLIN_HEIGHT; j++) {
 	//		std::cout << "(" << perlinArray[i][j][0] << "," << perlinArray[i][j][1] << "), ";
@@ -243,9 +238,11 @@ int main() {
 		window.clear();
 
 		float time = clock.getElapsedTime().asSeconds();
-		std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(perlinArray, time);
+		//std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(createPerlinNoise(10, 10, 0), time);
 
-		renderPerlinGradient(window, createPerlinGradient(animatedArray));
+		std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(createPerlinNoise(100, 100, 0), time);
+
+		renderPerlinGradient(window, createPerlinGradient(animatedArray, 10, 10));
 
 		//renderPerlinVectors(window, animatedArray);
 
