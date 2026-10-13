@@ -10,6 +10,9 @@ Image (Full Resolution):
 
 <img width="500" height="500" alt="Perlin_1_Noise" src="https://github.com/user-attachments/assets/420687d2-bff0-43f0-a027-483ced6db10d" />
 
+Multi-layer Noise:
+
+<img width="500" height="500" alt="Perlin_Noise3" src="https://github.com/user-attachments/assets/4b4d92a5-b194-46e0-be02-bea62f61365e" />
 Alternative Rendering Style:
 
 <img width="500" height="500" alt="Perlin_Noise5" src="https://github.com/user-attachments/assets/c3cba55b-f4ba-49c5-9252-581e4cc7b5a6" />
