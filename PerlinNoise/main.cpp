@@ -5,8 +5,8 @@
 #include <random>
 #include <iostream>
 
-const unsigned int WINDOW_WIDTH = 800;
-const unsigned int WINDOW_HEIGHT = 800;
+const unsigned int WINDOW_WIDTH = 256;
+const unsigned int WINDOW_HEIGHT = 256;
 
 const unsigned int NOISE_SCALE = 1;
 
@@ -16,6 +16,46 @@ std::vector<float> normalizeVector(std::vector<float> vector2) {
 	normalizedVector = { vector2[0] / vectorMagnitude, vector2[1] / vectorMagnitude };
 	return normalizedVector;
 }
+
+std::vector<std::vector<float>> addPerlinGradients(const std::vector<std::vector<float>>& gradient1, const std::vector<std::vector<float>>& gradient2) {
+	if (gradient1.empty()) {
+		return {};
+	}
+	size_t rows = gradient1.size();
+	size_t cols = gradient1[0].size();
+	std::vector<std::vector<float>> sumGradient(rows, std::vector<float>(cols, 0.0f));
+
+	for (size_t i = 0; i < rows; i++) {
+		size_t rowCols = gradient1[i].size();
+		for (size_t j = 0; j < rowCols; j++) {
+			float a = 0.0f;
+			float b = 0.0f;
+			if (i < gradient1.size() && j < gradient1[i].size()) a = gradient1[i][j];
+			if (i < gradient2.size() && j < gradient2[i].size()) b = gradient2[i][j];
+			sumGradient[i][j] = a + b;
+		}
+	}
+
+	return sumGradient;
+}
+
+std::vector<std::vector<float>> multiplyPerlinGradient(const std::vector<std::vector<float>>& gradient, float factor) {
+	if (gradient.empty()) {
+		return {};
+	}
+	size_t rows = gradient.size();
+	size_t cols = gradient[0].size();
+	std::vector<std::vector<float>> productGradient(rows, std::vector<float>(cols, 0.0f));
+
+	for (size_t i = 0; i < cols; i++) {
+		for (size_t j = 0; j < rows; j++) {
+			productGradient[i][j] = gradient[i][j] * factor;
+		}
+	}
+
+	return productGradient;
+}
+
 
 float vector2DotProduct(std::vector<float> vec1, std::vector<float> vec2) {
 	return vec1[0] * vec2[0] + vec1[1] * vec2[1];
@@ -147,8 +187,8 @@ std::vector<std::vector<float>> createPerlinGradient(const std::vector<std::vect
 	for (int i = 0; i < WINDOW_WIDTH / NOISE_SCALE; i++) {
 		for (int j = 0; j < WINDOW_HEIGHT / NOISE_SCALE; j++) {
 
-			float gridX = (static_cast<int>(i * NOISE_SCALE) - screenMargin) / vectorMarginX;
-			float gridY = (static_cast<int>(j * NOISE_SCALE) - screenMargin) / vectorMarginY;
+			float gridX = (i * static_cast<float>(NOISE_SCALE) - screenMargin) / vectorMarginX;
+			float gridY = (j * static_cast<float>(NOISE_SCALE) - screenMargin) / vectorMarginY;
 
 			int cellX = static_cast<int>(std::floor(gridX));
 			int cellY = static_cast<int>(std::floor(gridY));
@@ -200,7 +240,8 @@ void renderPerlinGradient(sf::RenderWindow& drawSurface, const std::vector<std::
 
 	for (int i = 0; i < WINDOW_WIDTH / NOISE_SCALE; i++) {
 		for (int j = 0; j < WINDOW_HEIGHT / NOISE_SCALE; j++) {
-			perlinGradient.setPixel(sf::Vector2u(i, j), hsv(pArray[i][j] * 300.0f, 1.0f, 1.0f));
+			perlinGradient.setPixel(sf::Vector2u(i, j), hsv(std::pow(pArray[i][j] * 300.0f, 1.5) , std::pow(pArray[i][j], 1.5), std::pow(pArray[i][j], 3.0)));
+			//perlinGradient.setPixel(sf::Vector2u(i, j), hsv(std::pow(pArray[i][j] * 300.0f, 1), std::pow(1.0f , 1), std::pow(1.0f , 1)));
 		}
 	}
 
@@ -240,9 +281,15 @@ int main() {
 		float time = clock.getElapsedTime().asSeconds();
 		//std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(createPerlinNoise(10, 10, 0), time);
 
-		std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(createPerlinNoise(100, 100, 0), time);
+		std::vector<std::vector<float>> gradient1 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(3, 3, 1), time), 3, 3), 0.5);
+		std::vector<std::vector<float>> gradient2 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(6, 6, 2), time), 6, 6), 0.4);
+		std::vector<std::vector<float>> gradient3 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(9, 9, 3), time), 9, 9), 0.3);
+		std::vector<std::vector<float>> gradient4 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(12, 12, 4), time), 12, 12), 0.2);
+		std::vector<std::vector<float>> gradient5 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(15, 15, 5), time), 15, 15), 0.1);
 
-		renderPerlinGradient(window, createPerlinGradient(animatedArray, 10, 10));
+		std::vector<std::vector<float>> gradient6 = multiplyPerlinGradient(addPerlinGradients(gradient1, addPerlinGradients(gradient2, addPerlinGradients(gradient3, addPerlinGradients(gradient4, gradient5)))), 0.75);
+
+		renderPerlinGradient(window, gradient6);
 
 		//renderPerlinVectors(window, animatedArray);
 
