@@ -281,11 +281,11 @@ int main() {
 		float time = clock.getElapsedTime().asSeconds();
 		//std::vector<std::vector<std::vector<float>>> animatedArray = rotatePerlinVectors(createPerlinNoise(10, 10, 0), time);
 
-		std::vector<std::vector<float>> gradient1 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(3, 3, 1), time), 3, 3), 0.5);
-		std::vector<std::vector<float>> gradient2 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(6, 6, 2), time), 6, 6), 0.4);
-		std::vector<std::vector<float>> gradient3 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(9, 9, 3), time), 9, 9), 0.3);
-		std::vector<std::vector<float>> gradient4 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(12, 12, 4), time), 12, 12), 0.2);
-		std::vector<std::vector<float>> gradient5 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(15, 15, 5), time), 15, 15), 0.1);
+		std::vector<std::vector<float>> gradient1 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(3, 3, 1), 1), 3, 3), 0.5);
+		std::vector<std::vector<float>> gradient2 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(6, 6, 2), 1), 6, 6), 0.4);
+		std::vector<std::vector<float>> gradient3 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(9, 9, 3), 1), 9, 9), 0.3);
+		std::vector<std::vector<float>> gradient4 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(12, 12, 4), 1), 12, 12), 0.2);
+		std::vector<std::vector<float>> gradient5 = multiplyPerlinGradient(createPerlinGradient(rotatePerlinVectors(createPerlinNoise(15, 15, 5), 1), 15, 15), 0.1);
 
 		std::vector<std::vector<float>> gradient6 = multiplyPerlinGradient(addPerlinGradients(gradient1, addPerlinGradients(gradient2, addPerlinGradients(gradient3, addPerlinGradients(gradient4, gradient5)))), 0.75);
 
