@@ -10,6 +10,10 @@ Image (Full Resolution):
 
 <img width="500" height="500" alt="Perlin_1_Noise" src="https://github.com/user-attachments/assets/420687d2-bff0-43f0-a027-483ced6db10d" />
 
+Alternative Rendering Style:
+
+<img width="500" height="500" alt="Perlin_Noise5" src="https://github.com/user-attachments/assets/c3cba55b-f4ba-49c5-9252-581e4cc7b5a6" />
+
 ## About
 
 Perlin noise is a gradient noise function developed by Ken Perlin in 1983. Unlike pure random noise, it produces smooth, continuous variation, which makes it useful for procedural textures, terrain generation, clouds, and other natural-looking patterns.
